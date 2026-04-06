@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Paint Report</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --border: #e2ddd6;
+    --text: #1a1816;
+    --muted: #7a746c;
+    --accent: #c94a1e;
+    --accent-light: #fdf0ec;
+    --accent-border: #f5c4b3;
+    --success: #2d6e3e;
+    --success-bg: #eaf3de;
+    --row-stripe: #faf9f7;
+    --input-focus: #c94a1e33;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .page-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0.5rem;
+  }
+
+  .paint-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .paint-icon svg { width: 22px; height: 22px; fill: white; }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .date-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0 0 10px 0;
+    text-align: left;
+  }
+
+  thead th:last-child { width: 44px; }
+
+  tbody tr {
+    border-top: 1px solid var(--border);
+  }
+
+  tbody tr:nth-child(even) td { background: var(--row-stripe); }
+
+  tbody td {
+    padding: 6px 4px;
+  }
+
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: transparent;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="number"] {
+    font-family: 'DM Mono', monospace;
+  }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--input-focus);
+  }
+
+  .qty-col { width: 110px; }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .remove-btn:hover { background: #fdf0ec; color: var(--accent); }
+  .remove-btn svg { width: 15px; height: 15px; }
+
+  .add-row-btn {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    width: 100%;
+    justify-content: center;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+
+  .add-row-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .notes-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    background: transparent;
+    transition: border-color 0.15s;
+  }
+
+  .notes-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--input-focus);
+  }
+
+  .submit-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .submit-btn svg { width: 18px; height: 18px; fill: white; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 1rem;
+  }
+
+  .toast.success {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid #c0dd97;
+  }
+
+  .toast.error {
+    background: #fcebeb;
+    color: #a32d2d;
+    border: 1px solid #f7c1c1;
+  }
+
+  .toast svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .history-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .history-toggle .arrow {
+    transition: transform 0.2s;
+    color: var(--muted);
+  }
+
+  .history-toggle .arrow.open { transform: rotate(180deg); }
+
+  #history-body { display: none; margin-top: 1rem; }
+
+  .history-table {
+    font-size: 13px;
+  }
+
+  .history-table th {
+    font-size: 11px;
+    padding-bottom: 8px;
+  }
+
+  .history-table td {
+    padding: 5px 4px;
+    font-size: 13px;
+  }
+
+  .history-table .date-col {
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .export-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    margin-top: 12px;
+  }
+
+  .export-btn:hover { background: var(--bg); color: var(--text); }
+  .export-btn svg { width: 14px; height: 14px; }
+
+  .config-note {
+    font-size: 12px;
+    color: var(--muted);
+    background: #fffbe6;
+    border: 1px solid #f5d87a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .config-note strong { color: #7a5c00; }
+  .config-note code { font-family: 'DM Mono', monospace; font-size: 11px; background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header>
+    <div class="brand">
+      <div class="paint-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Daily Paint Report</h1>
+        <div class="date-badge" id="today-date"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Parts Table -->
+  <div class="card">
+    <div class="card-label">Parts Painted Today</div>
+    <table id="parts-table">
+      <thead>
+        <tr>
+          <th>Part Number</th>
+          <th class="qty-col">Quantity</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="parts-body"></tbody>
+    </table>
+    <button class="add-row-btn" onclick="addRow()">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add another part
+    </button>
+  </div>
+
+  <!-- Notes -->
+  <div class="card">
+    <div class="card-label">Notes (optional)</div>
+    <textarea class="notes-input" id="notes" placeholder="Any issues, special instructions, or comments for today…"></textarea>
+  </div>
+
+  <!-- Submit -->
+  <button class="submit-btn" id="submit-btn" onclick="submitReport()">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    <span id="btn-text">Send Report</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- History -->
+  <div class="card" style="margin-top: 2rem;">
+    <div class="history-toggle" onclick="toggleHistory()">
+      <div class="card-label" style="margin-bottom:0;">Past Reports</div>
+      <svg class="arrow" id="history-arrow" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+      </svg>
+    </div>
+    <div id="history-body">
+      <div id="history-content"></div>
+      <button class="export-btn" onclick="exportExcel()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-.5 15h-3v-1.5h3V17zm0-3h-3v-1.5h3V14zm0-3h-3V9.5h3V11zm1-6V3.5L17.5 7H14.5z"/></svg>
+        Export all as Excel (.xlsx)
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIG — fill these in after EmailJS setup
+// ─────────────────────────────────────────────
+const CONFIG = {
+  emailjs_public_key: 'LDktS4WNzBxQU0l_Y',
+  emailjs_service_id: 'service_yc71pjs',
+  emailjs_template_id: 'template_2glbdbx',
+  recipient_email: 'thomas@sbt.com',
+  painter_name: 'Amir',
+  webhook_url: 'https://script.google.com/macros/s/AKfycbx-sT_8gLb_Ri8kvTKbARVaphoPWTgAPNNLZ6ZNzzuRVo6ZpTAjgbrb360IPNzhfmC9Dg/exec'
+};
+// ─────────────────────────────────────────────
+
+emailjs.init(CONFIG.emailjs_public_key);
+
+let rowCount = 0;
+
+function today() {
+  return new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+
+function todayISO() {
+  return new Date().toISOString().split('T')[0];
+}
+
+document.getElementById('today-date').textContent = today();
+
+function addRow(partNum = '', qty = '') {
+  rowCount++;
+  const id = rowCount;
+  const tbody = document.getElementById('parts-body');
+  const tr = document.createElement('tr');
+  tr.id = `row-${id}`;
+  tr.innerHTML = `
+    <td><input type="text" placeholder="e.g. PN-4821" value="${partNum}" id="part-${id}" /></td>
+    <td class="qty-col"><input type="number" min="1" placeholder="0" value="${qty}" id="qty-${id}" /></td>
+    <td>
+      <button class="remove-btn" onclick="removeRow(${id})" title="Remove row">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      </button>
+    </td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function removeRow(id) {
+  const rows = document.querySelectorAll('#parts-body tr');
+  if (rows.length <= 1) return;
+  document.getElementById(`row-${id}`)?.remove();
+}
+
+function getRows() {
+  const rows = document.querySelectorAll('#parts-body tr');
+  const data = [];
+  rows.forEach(tr => {
+    const id = tr.id.replace('row-', '');
+    const part = document.getElementById(`part-${id}`)?.value.trim();
+    const qty = document.getElementById(`qty-${id}`)?.value.trim();
+    if (part || qty) data.push({ part: part || '—', qty: qty || '—' });
+  });
+  return data;
+}
+
+function buildEmailHTML(rows, notes, dateStr) {
+  const tableRows = rows.map(r => `
+    <tr>
+      <td style="padding:10px 16px; border-bottom:1px solid #e8e4df; font-family:monospace; font-size:14px;">${r.part}</td>
+      <td style="padding:10px 16px; border-bottom:1px solid #e8e4df; text-align:center; font-size:14px;">${r.qty}</td>
+    </tr>`).join('');
+
+  const notesSection = notes ? `
+    <p style="margin:24px 0 8px; font-size:13px; font-weight:600; color:#7a746c; text-transform:uppercase; letter-spacing:0.06em;">Notes</p>
+    <p style="font-size:14px; color:#3a3632; line-height:1.6; background:#f5f3ef; border-radius:8px; padding:12px 16px;">${notes}</p>` : '';
+
+  return `
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif; max-width:560px; margin:0 auto; color:#1a1816;">
+      <div style="background:#c94a1e; border-radius:12px 12px 0 0; padding:20px 24px;">
+        <p style="margin:0; color:rgba(255,255,255,0.8); font-size:12px; text-transform:uppercase; letter-spacing:0.1em;">Paint Shop Report</p>
+        <p style="margin:4px 0 0; color:white; font-size:20px; font-weight:600;">${dateStr}</p>
+        <p style="margin:4px 0 0; color:rgba(255,255,255,0.75); font-size:14px;">Reported by ${CONFIG.painter_name}</p>
+      </div>
+      <div style="border:1px solid #e2ddd6; border-top:none; border-radius:0 0 12px 12px; padding:24px;">
+        <table style="width:100%; border-collapse:collapse; border:1px solid #e8e4df; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:#f5f3ef;">
+              <th style="padding:10px 16px; text-align:left; font-size:12px; font-weight:600; color:#7a746c; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid #e8e4df;">Part Number</th>
+              <th style="padding:10px 16px; text-align:center; font-size:12px; font-weight:600; color:#7a746c; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid #e8e4df;">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+        ${notesSection}
+      </div>
+    </div>`;
+}
+
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type}`;
+  const icon = type === 'success'
+    ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+  t.innerHTML = icon + `<span>${msg}</span>`;
+  t.style.display = 'flex';
+  setTimeout(() => { t.style.display = 'none'; }, 6000);
+}
+
+function saveToHistory(rows, notes, dateStr, isoDate) {
+  const history = JSON.parse(localStorage.getItem('paint_history') || '[]');
+  history.unshift({ date: isoDate, dateStr, rows, notes });
+  localStorage.setItem('paint_history', JSON.stringify(history));
+}
+
+function loadHistory() {
+  return JSON.parse(localStorage.getItem('paint_history') || '[]');
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  const el = document.getElementById('history-content');
+  if (history.length === 0) {
+    el.innerHTML = '<p style="font-size:13px; color:var(--muted); padding:8px 0;">No past reports yet.</p>';
+    return;
+  }
+  const groups = {};
+  history.forEach(entry => {
+    if (!groups[entry.date]) groups[entry.date] = { dateStr: entry.dateStr, rows: [] };
+    entry.rows.forEach(r => groups[entry.date].rows.push(r));
+  });
+
+  let html = '';
+  Object.keys(groups).slice(0, 15).forEach(date => {
+    const g = groups[date];
+    html += `<div style="margin-bottom:1.25rem;">
+      <p style="font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:6px;">${g.dateStr}</p>
+      <table class="history-table" style="width:100%">
+        <thead><tr><th>Part #</th><th style="text-align:right;">Qty</th></tr></thead>
+        <tbody>
+          ${g.rows.map(r => `<tr><td style="font-family:'DM Mono',monospace;font-size:13px;">${r.part}</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:13px;">${r.qty}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function toggleHistory() {
+  const body = document.getElementById('history-body');
+  const arrow = document.getElementById('history-arrow');
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  arrow.classList.toggle('open', !open);
+  if (!open) renderHistory();
+}
+
+function exportExcel() {
+  const history = loadHistory();
+  if (history.length === 0) { alert('No data to export yet.'); return; }
+  const flat = [];
+  history.forEach(entry => {
+    entry.rows.forEach(r => {
+      flat.push({ Date: entry.dateStr, 'Part Number': r.part, Quantity: r.qty, Notes: entry.notes || '' });
+    });
+  });
+  const ws = XLSX.utils.json_to_sheet(flat);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Paint Log');
+  XLSX.writeFile(wb, `paint_log_${todayISO()}.xlsx`);
+}
+
+async function submitReport() {
+  const rows = getRows().filter(r => r.part !== '—' || r.qty !== '—');
+  if (rows.length === 0) {
+    showToast('error', 'Please add at least one part number and quantity.');
+    return;
+  }
+
+  const notes = document.getElementById('notes').value.trim();
+  const isoDate = todayISO();
+  const dateStr = today();
+  const subject = `Painted Today - ${isoDate}`;
+  const htmlBody = buildEmailHTML(rows, notes, dateStr);
+
+  const btn = document.getElementById('submit-btn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btn-text');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Sending…';
+
+  try {
+    await emailjs.send(CONFIG.emailjs_service_id, CONFIG.emailjs_template_id, {
+      to_email: CONFIG.recipient_email,
+      subject: subject,
+      html_body: htmlBody
+    });
+
+    // Post to Google Sheets inventory
+    try {
+      await fetch(CONFIG.webhook_url, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'paint', rows, notes })
+      });
+    } catch(sheetErr) {
+      console.warn('Sheet sync failed:', sheetErr);
+    }
+
+    saveToHistory(rows, notes, dateStr, isoDate);
+    showToast('success', `Report sent and inventory updated!`);
+
+    // clear form
+    document.getElementById('parts-body').innerHTML = '';
+    rowCount = 0;
+    addRow();
+    document.getElementById('notes').value = '';
+
+  } catch (err) {
+    console.error("EmailJS error:", JSON.stringify(err));
+    const errMsg = (err && (err.text || err.message)) || JSON.stringify(err) || "Unknown error";
+    showToast('error', 'Send failed: ' + errMsg);
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Send Report';
+  }
+}
+
+// Init
+addRow();
+</script>
+</body>
+</html>

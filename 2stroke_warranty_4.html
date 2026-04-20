@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2-Stroke Warranty Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --border: #e2ddd6;
+    --text: #1a1816;
+    --muted: #7a746c;
+    --accent: #533ab7;
+    --accent-light: #f0eeff;
+    --success: #2d6e3e;
+    --success-bg: #eaf3de;
+    --row-stripe: #faf9f7;
+    --input-focus: #533ab733;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  nav {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    height: 52px; display: flex; align-items: center;
+    padding: 0 1.5rem; gap: 4px; position: sticky; top: 0; z-index: 100;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 9px; margin-right: 1.5rem; }
+  .nav-dot { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; }
+  .nav-title { font-size: 14px; font-weight: 600; letter-spacing: -0.2px; white-space: nowrap; }
+
+  .nav-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 6px 12px; border-radius: 7px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--muted);
+    transition: background 0.15s, color 0.15s; white-space: nowrap;
+  }
+  .nav-btn:hover { background: var(--bg); color: var(--text); }
+  .nav-btn.active { background: var(--accent-light); color: var(--accent); }
+
+  .page { display: none; padding: 2rem 1rem; max-width: 760px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.25rem; }
+
+  .card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  input[type="text"], input[type="date"], textarea, select {
+    width: 100%; border: 1px solid var(--border); border-radius: 7px;
+    padding: 9px 11px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; background: transparent; color: var(--text);
+    outline: none; transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--input-focus); }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+  input[type="date"] { font-family: 'DM Mono', monospace; }
+
+  .submit-btn {
+    width: 100%; background: var(--accent); color: white;
+    border: none; border-radius: 10px; padding: 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.15s, transform 0.1s; margin-top: 1.25rem;
+  }
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .submit-btn svg { width: 18px; height: 18px; fill: white; }
+
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast { display: none; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; font-size: 14px; font-weight: 500; margin-top: 1rem; }
+  .toast.success { background: var(--success-bg); color: var(--success); border: 1px solid #c0dd97; }
+  .toast.error   { background: #fcebeb; color: #a32d2d; border: 1px solid #f7c1c1; }
+  .toast svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .filter-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.25rem; }
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-group label { font-size: 11px; }
+  .filter-group input { padding: 7px 10px; font-size: 13px; width: auto; }
+
+  .clear-btn {
+    background: none; border: 1px solid var(--border); border-radius: 7px;
+    padding: 7px 12px; font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500; color: var(--muted);
+    cursor: pointer; transition: background 0.15s; align-self: flex-end;
+  }
+  .clear-btn:hover { background: var(--bg); color: var(--text); }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 10px 10px 0; text-align: left; white-space: nowrap; }
+  .data-table td { padding: 9px 10px 9px 0; border-top: 1px solid var(--border); vertical-align: top; font-size: 13px; }
+  .data-table tr:nth-child(even) td { background: var(--row-stripe); }
+  .data-table td.mono { font-family: 'DM Mono', monospace; }
+  .data-table td.muted { color: var(--muted); font-size: 12px; max-width: 220px; }
+
+  .result-count { font-size: 12px; color: var(--muted); margin-bottom: 12px; font-family: 'DM Mono', monospace; }
+
+  .chart-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .chart-controls select {
+    padding: 7px 26px 7px 10px; font-size: 13px; appearance: none; width: auto;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%237a746c'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+    background-color: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; font-family: 'DM Sans', sans-serif; color: var(--text); outline: none; cursor: pointer;
+  }
+  .chart-controls select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--input-focus); }
+  .chart-controls label { font-size: 13px; color: var(--muted); }
+
+  .chart-wrap { position: relative; height: 320px; }
+  .no-data { text-align: center; color: var(--muted); font-size: 14px; padding: 4rem 0; }
+  .loading { text-align: center; color: var(--muted); font-size: 13px; padding: 2rem 0; font-family: 'DM Mono', monospace; }
+  .chart-hint { font-size: 12px; color: var(--muted); margin-top: 10px; text-align: center; }
+
+  @media (max-width: 520px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .filter-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-dot"></div>
+    <span class="nav-title">2-Stroke Warranty</span>
+  </div>
+  <button class="nav-btn active" onclick="showPage('submit', this)">Submit</button>
+  <button class="nav-btn" onclick="showPage('chart', this)">Chart</button>
+  <button class="nav-btn" onclick="showPage('filter', this)">Filter</button>
+  <button class="nav-btn" onclick="showPage('data', this)">Raw Data</button>
+</nav>
+
+<!-- Submit -->
+<div class="page active" id="page-submit">
+  <div class="card">
+    <div class="card-label">New Warranty Entry</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Submitted By</label>
+        <input type="text" id="submitter" placeholder="e.g. Dante" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="entry-date" />
+      </div>
+      <div class="form-group">
+        <label>Part Number</label>
+        <input type="text" id="part-number" placeholder="e.g. 29-417" />
+      </div>
+      <div class="form-group">
+        <label>RG #</label>
+        <input type="text" id="rg-number" placeholder="e.g. RG-1042" />
+      </div>
+      <div class="form-group full">
+        <label>Customer Name</label>
+        <input type="text" id="customer-name" placeholder="e.g. John Smith" />
+      </div>
+      <div class="form-group full">
+        <label>Issue Description</label>
+        <textarea id="issue-desc" placeholder="Describe the warranty issue in detail…"></textarea>
+      </div>
+    </div>
+  </div>
+  <button class="submit-btn" id="submit-btn" onclick="submitWarranty()">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    <span id="btn-text">Submit Warranty</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- Chart -->
+<div class="page" id="page-chart">
+  <div class="card">
+    <div class="card-label">Warranties by Part Number</div>
+    <div class="chart-controls">
+      <label>Month</label>
+      <select id="chart-month"></select>
+      <label>Year</label>
+      <select id="chart-year"></select>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="warranty-chart"></canvas>
+      <div class="no-data" id="chart-no-data" style="display:none;">No warranty data for this period.</div>
+      <div class="loading" id="chart-loading" style="display:none;">Loading from Google Sheets…</div>
+    </div>
+    <p class="chart-hint">Click any bar to jump to filtered results for that part</p>
+  </div>
+</div>
+
+<!-- Filter -->
+<div class="page" id="page-filter">
+  <div class="card">
+    <div class="card-label">Filter Warranties</div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>Part Number</label>
+        <input type="text" id="filter-part" placeholder="e.g. 29-417" oninput="applyFilter()" />
+      </div>
+      <div class="filter-group">
+        <label>From</label>
+        <input type="date" id="filter-from" onchange="applyFilter()" />
+      </div>
+      <div class="filter-group">
+        <label>To</label>
+        <input type="date" id="filter-to" onchange="applyFilter()" />
+      </div>
+      <div class="filter-group">
+        <label>Customer</label>
+        <input type="text" id="filter-customer" placeholder="Name…" oninput="applyFilter()" />
+      </div>
+      <button class="clear-btn" onclick="clearFilter()">Clear</button>
+    </div>
+    <div class="result-count" id="filter-count"></div>
+    <div class="loading" id="filter-loading" style="display:none;">Loading from Google Sheets…</div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Part #</th><th>RG #</th><th>Customer</th><th>By</th><th>Issue</th></tr></thead>
+        <tbody id="filter-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Raw Data -->
+<div class="page" id="page-data">
+  <div class="card">
+    <div class="card-label">All Warranty Entries</div>
+    <div class="result-count" id="data-count"></div>
+    <div class="loading" id="data-loading" style="display:none;">Loading from Google Sheets…</div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Part #</th><th>RG #</th><th>Customer</th><th>By</th><th>Issue</th></tr></thead>
+        <tbody id="data-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONFIG = {
+  emailjs_public_key: 'LDktS4WNzBxQU0l_Y',
+  emailjs_service_id: 'service_yc71pjs',
+  emailjs_template_id: 'template_2glbdbx',
+  recipient_email: 'thomas@sbt.com',
+  webhook_url: 'https://script.google.com/macros/s/AKfycby43laZkSiiHfgu1xeZBp5zIBffYTA4xCA9kIlDY3iodGTLRCG0iHVEmDXORkxkP8yw/exec',
+};
+
+emailjs.init(CONFIG.emailjs_public_key);
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let chartInstance = null;
+let allWarranties = [];
+let dataLoaded = false;
+
+// ── Init ───────────────────────────────────────────────
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+document.getElementById('entry-date').value = todayISO();
+
+const now = new Date();
+const monthSel = document.getElementById('chart-month');
+const yearSel  = document.getElementById('chart-year');
+
+MONTHS.forEach((m, i) => {
+  const opt = document.createElement('option');
+  opt.value = i; opt.textContent = m;
+  if (i === now.getMonth()) opt.selected = true;
+  monthSel.appendChild(opt);
+});
+
+for (let y = now.getFullYear(); y >= 2024; y--) {
+  const opt = document.createElement('option');
+  opt.value = y; opt.textContent = y;
+  if (y === now.getFullYear()) opt.selected = true;
+  yearSel.appendChild(opt);
+}
+
+monthSel.addEventListener('change', renderChart);
+yearSel.addEventListener('change', renderChart);
+
+// ── Navigation ─────────────────────────────────────────
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'chart')  loadAndRenderChart();
+  if (name === 'filter') loadAndRenderFilter();
+  if (name === 'data')   loadAndRenderData();
+}
+
+// ── Data ───────────────────────────────────────────────
+async function fetchWarranties(force) {
+  if (dataLoaded && !force) return allWarranties;
+  try {
+    const res  = await fetch(CONFIG.webhook_url + '?action=getWarranties');
+    const data = await res.json();
+    allWarranties = data.warranties || [];
+    dataLoaded = true;
+  } catch(e) {
+    console.warn('Fetch failed:', e);
+  }
+  return allWarranties;
+}
+
+function buildRows(list) {
+  if (!list.length) return '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem 0;">No entries found.</td></tr>';
+  return list.map(e => `<tr>
+    <td class="mono">${e.date}</td>
+    <td class="mono">${e.partNumber}</td>
+    <td class="mono">${e.rgNumber}</td>
+    <td>${e.customerName}</td>
+    <td>${e.submitter}</td>
+    <td class="muted">${e.issueDesc}</td>
+  </tr>`).join('');
+}
+
+// ── Chart ──────────────────────────────────────────────
+async function loadAndRenderChart() {
+  document.getElementById('chart-loading').style.display = 'block';
+  document.getElementById('warranty-chart').style.display = 'none';
+  document.getElementById('chart-no-data').style.display = 'none';
+  await fetchWarranties(true);
+  document.getElementById('chart-loading').style.display = 'none';
+  renderChart();
+}
+
+function renderChart() {
+  const month = parseInt(monthSel.value);
+  const year  = parseInt(yearSel.value);
+
+  const filtered = allWarranties.filter(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    return d.getMonth() === month && d.getFullYear() === year;
+  });
+
+  const canvas = document.getElementById('warranty-chart');
+  const noData = document.getElementById('chart-no-data');
+
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  if (!filtered.length) {
+    canvas.style.display = 'none';
+    noData.style.display = 'block';
+    return;
+  }
+
+  canvas.style.display = 'block';
+  noData.style.display = 'none';
+
+  const counts = {};
+  filtered.forEach(e => { const p = e.partNumber || 'Unknown'; counts[p] = (counts[p] || 0) + 1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const labels = sorted.map(x => x[0]);
+  const data   = sorted.map(x => x[1]);
+  const palette = ['#533ab7','#7f77dd','#1a5c9e','#378add','#0f6e56','#1d9e75','#854f0b','#ba7517','#993556','#d4537e','#a32d2d','#e24b4a'];
+
+  chartInstance = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Claims',
+        data,
+        backgroundColor: labels.map((_,i) => palette[i%palette.length]+'cc'),
+        borderColor:     labels.map((_,i) => palette[i%palette.length]),
+        borderWidth: 1.5, borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const part = labels[elements[0].index];
+        const firstDay = new Date(year, month, 1).toISOString().split('T')[0];
+        const lastDay  = new Date(year, month+1, 0).toISOString().split('T')[0];
+        document.getElementById('filter-part').value     = part;
+        document.getElementById('filter-from').value     = firstDay;
+        document.getElementById('filter-to').value       = lastDay;
+        document.getElementById('filter-customer').value = '';
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.nav-btn[onclick*="filter"]').classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-filter').classList.add('active');
+        loadAndRenderFilter();
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} claim${ctx.parsed.y!==1?'s':''}` } }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'DM Mono', size: 12 } }, grid: { color: '#e2ddd6' } },
+        x: { ticks: { font: { family: 'DM Mono', size: 13, weight: '500' } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ── Filter ─────────────────────────────────────────────
+async function loadAndRenderFilter() {
+  document.getElementById('filter-loading').style.display = 'block';
+  document.getElementById('filter-body').innerHTML = '';
+  document.getElementById('filter-count').textContent = '';
+  await fetchWarranties(true);
+  document.getElementById('filter-loading').style.display = 'none';
+  applyFilter();
+}
+
+function applyFilter() {
+  const part     = document.getElementById('filter-part').value.trim().toLowerCase();
+  const from     = document.getElementById('filter-from').value;
+  const to       = document.getElementById('filter-to').value;
+  const customer = document.getElementById('filter-customer').value.trim().toLowerCase();
+
+  const result = allWarranties.filter(e => {
+    if (part     && !String(e.partNumber).toLowerCase().includes(part)) return false;
+    if (from     && e.date < from) return false;
+    if (to       && e.date > to)   return false;
+    if (customer && !String(e.customerName).toLowerCase().includes(customer)) return false;
+    return true;
+  });
+
+  document.getElementById('filter-count').textContent = `${result.length} result${result.length!==1?'s':''}`;
+  document.getElementById('filter-body').innerHTML = buildRows(result);
+}
+
+function clearFilter() {
+  ['filter-part','filter-from','filter-to','filter-customer'].forEach(id => document.getElementById(id).value = '');
+  applyFilter();
+}
+
+// ── Raw Data ───────────────────────────────────────────
+async function loadAndRenderData() {
+  document.getElementById('data-loading').style.display = 'block';
+  document.getElementById('data-body').innerHTML = '';
+  document.getElementById('data-count').textContent = '';
+  await fetchWarranties(true);
+  document.getElementById('data-loading').style.display = 'none';
+  document.getElementById('data-count').textContent = `${allWarranties.length} total entr${allWarranties.length!==1?'ies':'y'}`;
+  document.getElementById('data-body').innerHTML = buildRows(allWarranties);
+}
+
+// ── Email HTML ─────────────────────────────────────────
+function buildEmailHTML(e) {
+  return `<div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:560px;margin:0 auto;color:#1a1816;">
+    <div style="background:#533ab7;border-radius:12px 12px 0 0;padding:20px 24px;">
+      <p style="margin:0;color:rgba(255,255,255,0.8);font-size:12px;text-transform:uppercase;letter-spacing:0.1em;">2-Stroke Warranty</p>
+      <p style="margin:4px 0 0;color:white;font-size:20px;font-weight:600;">${e.date}</p>
+      <p style="margin:4px 0 0;color:rgba(255,255,255,0.75);font-size:14px;">Submitted by ${e.submitter}</p>
+    </div>
+    <div style="border:1px solid #e2ddd6;border-top:none;border-radius:0 0 12px 12px;padding:24px;">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+        <tr><td style="padding:8px 0;font-size:12px;font-weight:600;color:#7a746c;text-transform:uppercase;letter-spacing:0.06em;width:140px;">Part Number</td>
+            <td style="padding:8px 0;font-size:15px;font-weight:600;font-family:monospace;">${e.partNumber}</td></tr>
+        <tr><td style="padding:8px 0;font-size:12px;font-weight:600;color:#7a746c;text-transform:uppercase;letter-spacing:0.06em;border-top:1px solid #e8e4df;">RG #</td>
+            <td style="padding:8px 0;font-size:15px;font-family:monospace;border-top:1px solid #e8e4df;">${e.rgNumber}</td></tr>
+        <tr><td style="padding:8px 0;font-size:12px;font-weight:600;color:#7a746c;text-transform:uppercase;letter-spacing:0.06em;border-top:1px solid #e8e4df;">Customer</td>
+            <td style="padding:8px 0;font-size:15px;border-top:1px solid #e8e4df;">${e.customerName}</td></tr>
+      </table>
+      <p style="font-size:12px;font-weight:600;color:#7a746c;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Issue Description</p>
+      <p style="font-size:14px;color:#3a3632;line-height:1.7;background:#f5f3ef;border-radius:8px;padding:14px 16px;">${e.issueDesc}</p>
+    </div>
+  </div>`;
+}
+
+// ── Toast ──────────────────────────────────────────────
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + type;
+  const icon = type === 'success'
+    ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+  t.innerHTML = icon + '<span>' + msg + '</span>';
+  t.style.display = 'flex';
+  setTimeout(() => { t.style.display = 'none'; }, 6000);
+}
+
+// ── Submit ─────────────────────────────────────────────
+async function submitWarranty() {
+  const entry = {
+    submitter:    document.getElementById('submitter').value.trim(),
+    date:         document.getElementById('entry-date').value,
+    partNumber:   document.getElementById('part-number').value.trim(),
+    rgNumber:     document.getElementById('rg-number').value.trim(),
+    customerName: document.getElementById('customer-name').value.trim(),
+    issueDesc:    document.getElementById('issue-desc').value.trim(),
+  };
+
+  if (!entry.submitter || !entry.partNumber || !entry.rgNumber || !entry.customerName || !entry.issueDesc) {
+    showToast('error', 'Please fill in all fields before submitting.');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btn-text');
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Submitting…';
+
+  try {
+    await emailjs.send(CONFIG.emailjs_service_id, CONFIG.emailjs_template_id, {
+      to_email:  CONFIG.recipient_email,
+      subject:   '2-Stroke Warranties Today - ' + entry.date,
+      html_body: buildEmailHTML(entry)
+    });
+
+    try {
+      await fetch(CONFIG.webhook_url, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'warranty', entry })
+      });
+    } catch(e) { console.warn('Sheet post failed:', e); }
+
+    dataLoaded = false; // force refresh next time
+    showToast('success', 'Warranty submitted, emailed, and logged to Google Sheets!');
+    ['submitter','part-number','rg-number','customer-name','issue-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('entry-date').value = todayISO();
+
+  } catch (err) {
+    const errMsg = (err && (err.text || err.message)) || JSON.stringify(err) || 'Unknown error';
+    showToast('error', 'Send failed: ' + errMsg);
+  } finally {
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Submit Warranty';
+  }
+}
+</script>
+</body>
+</html>

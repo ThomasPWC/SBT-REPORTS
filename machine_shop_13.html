@@ -323,7 +323,7 @@
         <label>Operation</label>
         <select id="f-op" onchange="applyFilter()">
           <option value="">All</option>
-          <option>Deck</option><option>Bore</option><option>Hog</option><option>Hone</option><option>Other</option>
+          <option>Deck</option><option>Bore</option><option>Deck and Bore</option><option>Deck (Degree Cut)</option><option>Mill (Threaded Insert)</option><option>Mill (Deck)</option><option>Hog</option><option>Hone</option><option>Other</option>
         </select>
       </div>
       <div class="filter-group">
@@ -397,6 +397,10 @@
           <option value="">Select…</option>
           <option>Deck</option>
           <option>Bore</option>
+          <option>Deck and Bore</option>
+          <option>Deck (Degree Cut)</option>
+          <option>Mill (Threaded Insert)</option>
+          <option>Mill (Deck)</option>
           <option>Hog</option>
           <option>Hone</option>
           <option>Other</option>
@@ -544,6 +548,10 @@ function addWorkRow(data={}) {
             <option value="">Select…</option>
             <option ${data.op==='Deck'?'selected':''}>Deck</option>
             <option ${data.op==='Bore'?'selected':''}>Bore</option>
+            <option ${data.op==='Deck and Bore'?'selected':''}>Deck and Bore</option>
+            <option ${data.op==='Deck (Degree Cut)'?'selected':''}>Deck (Degree Cut)</option>
+            <option ${data.op==='Mill (Threaded Insert)'?'selected':''}>Mill (Threaded Insert)</option>
+            <option ${data.op==='Mill (Deck)'?'selected':''}>Mill (Deck)</option>
             <option ${data.op==='Hog'?'selected':''}>Hog</option>
             <option ${data.op==='Hone'?'selected':''}>Hone</option>
             <option ${data.op==='Other'?'selected':''}>Other</option>

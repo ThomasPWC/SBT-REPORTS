@@ -415,7 +415,7 @@ const CONFIG = {
   emailjs_template_id: 'template_2glbdbx',
   recipient_email: 'thomas@sbt.com',
   painter_name: 'Amir',
-  webhook_url: 'https://script.google.com/macros/s/AKfycbx-sT_8gLb_Ri8kvTKbARVaphoPWTgAPNNLZ6ZNzzuRVo6ZpTAjgbrb360IPNzhfmC9Dg/exec'
+  webhook_url: 'https://script.google.com/macros/s/AKfycby43laZkSiiHfgu1xeZBp5zIBffYTA4xCA9kIlDY3iodGTLRCG0iHVEmDXORkxkP8yw/exec'
 };
 // ─────────────────────────────────────────────
 
@@ -610,7 +610,7 @@ async function submitReport() {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: 'paint', rows, notes })
+        body: JSON.stringify({ source: 'paint', rows, notes, date: isoDate, painter_name: CONFIG.painter_name })
       });
     } catch(sheetErr) {
       console.warn('Sheet sync failed:', sheetErr);

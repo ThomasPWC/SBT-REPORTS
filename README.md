@@ -97,7 +97,7 @@ This is a set of standalone HTML reporting tools built for SBT (powersports part
   - Part Number (free text, e.g. "203")
   - Part Type (dropdown: Case, Cylinder, Rotary Cover, Web, Head, Valve, Pump Cover, Other)
   - Cylinder Sub-Type (appears only when Cylinder selected: Std, Reg, 4-Stroke) — saved as separate field but NOT shown in filter/chart grouping
-  - Operation (dropdown: Deck, Bore, Hog, Hone, Other)
+  - Operation (dropdown: Deck, Bore, Deck and Bore, Deck (Degree Cut), Mill (Threaded Insert), Mill (Deck), Hog, Hone, Other)
   - Actual Time (hours + minutes)
   - Qty
 - **All fields mandatory** — validates before submit

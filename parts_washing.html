@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parts Washing Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --border: #e2ddd6;
+    --text: #1a1816;
+    --muted: #7a746c;
+    --accent: #1a7a5e;
+    --accent-light: #eaf5f0;
+    --success: #2d6e3e;
+    --success-bg: #eaf3de;
+    --row-stripe: #faf9f7;
+    --input-focus: #1a7a5e33;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .page-wrap { max-width: 680px; margin: 0 auto; }
+
+  header { margin-bottom: 2.5rem; }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0.5rem;
+  }
+
+  .page-icon {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .page-icon svg { width: 22px; height: 22px; fill: white; }
+
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+
+  .date-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px; color: var(--muted); margin-top: 2px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    font-size: 12px; font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0 0 10px 0;
+    text-align: left;
+  }
+
+  thead th:last-child { width: 44px; }
+  tbody tr { border-top: 1px solid var(--border); }
+  tbody tr:nth-child(even) td { background: var(--row-stripe); }
+  tbody td { padding: 6px 4px; }
+
+  .pn-col { width: 120px; }
+
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: transparent;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="number"] { font-family: 'DM Mono', monospace; }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--input-focus);
+  }
+
+  input.invalid {
+    border-color: #e24b4a;
+    box-shadow: 0 0 0 3px #e24b4a22;
+  }
+
+  .remove-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 6px; border-radius: 6px; color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+  .remove-btn:hover { background: #fdf0ec; color: #c94a1e; }
+  .remove-btn svg { width: 15px; height: 15px; }
+
+  .add-row-btn {
+    margin-top: 12px;
+    display: flex; align-items: center; gap: 7px;
+    background: none;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; color: var(--muted);
+    cursor: pointer; width: 100%; justify-content: center;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .add-row-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .notes-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--text);
+    resize: vertical; min-height: 80px;
+    outline: none; background: transparent;
+    transition: border-color 0.15s;
+  }
+  .notes-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--input-focus);
+  }
+
+  .submit-btn {
+    width: 100%;
+    background: var(--accent); color: white;
+    border: none; border-radius: 10px; padding: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:active { transform: scale(0.99); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .submit-btn svg { width: 18px; height: 18px; fill: white; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    display: none; align-items: center; gap: 10px;
+    padding: 12px 16px; border-radius: 10px;
+    font-size: 14px; font-weight: 500; margin-top: 1rem;
+  }
+  .toast.success { background: var(--success-bg); color: var(--success); border: 1px solid #c0dd97; }
+  .toast.error { background: #fcebeb; color: #a32d2d; border: 1px solid #f7c1c1; }
+  .toast svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .history-toggle {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    cursor: pointer; user-select: none;
+  }
+  .history-toggle .arrow { transition: transform 0.2s; color: var(--muted); }
+  .history-toggle .arrow.open { transform: rotate(180deg); }
+  #history-body { display: none; margin-top: 1rem; }
+
+  .export-btn {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header>
+    <div class="brand">
+      <div class="page-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5zM22 7h-2V4h-3V2h5v5zm0 15v-5h-2v3h-3v2h5zM2 22h5v-2H4v-3H2v5zM2 2v5h2V4h3V2H2z"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Parts Washing Report</h1>
+        <div class="date-badge" id="today-date"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Parts Table -->
+  <div class="card">
+    <div class="card-label">Parts Washed Today</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="pn-col">Part #</th>
+          <th>Description</th>
+          <th class="pn-col" style="width:90px;">Qty</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="parts-body"></tbody>
+    </table>
+    <button class="add-row-btn" onclick="addRow()">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add another part
+    </button>
+  </div>
+
+  <!-- Notes -->
+  <div class="card">
+    <div class="card-label">Notes (optional)</div>
+    <textarea class="notes-input" id="notes" placeholder="Any issues or comments for today…"></textarea>
+  </div>
+
+  <!-- Submit -->
+  <button class="submit-btn" id="submit-btn" onclick="submitReport()">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    <span id="btn-text">Send Report</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- History -->
+  <div class="card" style="margin-top: 2rem;">
+    <div class="history-toggle" onclick="toggleHistory()">
+      <div class="card-label" style="margin-bottom:0;">Past Reports</div>
+      <svg class="arrow" id="history-arrow" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+      </svg>
+    </div>
+    <div id="history-body">
+      <div id="history-content"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CONFIG = {
+  recipient_email: 'thomas@sbt.com',
+};
+
+let rowCount = 0;
+
+function today() {
+  return new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+function todayISO() {
+  return new Date().toISOString().split('T')[0];
+}
+
+document.getElementById('today-date').textContent = today();
+
+function addRow(partNum = '', desc = '', qty = '') {
+  rowCount++;
+  const id = rowCount;
+  const tbody = document.getElementById('parts-body');
+  const tr = document.createElement('tr');
+  tr.id = `row-${id}`;
+  tr.innerHTML = `
+    <td class="pn-col">
+      <input type="text" placeholder="203" maxlength="3" value="${partNum}"
+        id="part-${id}"
+        oninput="validatePN(this)"
+        style="font-family:'DM Mono',monospace; text-align:center; font-size:15px; font-weight:500;" />
+    </td>
+    <td>
+      <input type="text" placeholder="e.g. Cylinder head, crankshaft…" value="${desc}" id="desc-${id}" />
+    </td>
+    <td style="width:90px;">
+      <input type="number" min="1" placeholder="0" value="${qty}" id="qty-${id}" />
+    </td>
+    <td>
+      <button class="remove-btn" onclick="removeRow(${id})" title="Remove">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      </button>
+    </td>`;
+  tbody.appendChild(tr);
+}
+
+function validatePN(input) {
+  input.value = input.value.replace(/\D/g, '').slice(0, 3);
+  if (input.value.length > 0 && input.value.length < 3) {
+    input.classList.add('invalid');
+  } else {
+    input.classList.remove('invalid');
+  }
+}
+
+function removeRow(id) {
+  const rows = document.querySelectorAll('#parts-body tr');
+  if (rows.length <= 1) return;
+  document.getElementById(`row-${id}`)?.remove();
+}
+
+function getRows() {
+  const rows = document.querySelectorAll('#parts-body tr');
+  const data = [];
+  rows.forEach(tr => {
+    const id = tr.id.replace('row-', '');
+    const part = document.getElementById(`part-${id}`)?.value.trim();
+    const desc = document.getElementById(`desc-${id}`)?.value.trim();
+    const qty = document.getElementById(`qty-${id}`)?.value.trim();
+    if (part || desc) data.push({ part: part || '-', desc: desc || '-', qty: qty || '-' });
+  });
+  return data;
+}
+
+function buildEmailHTML(rows, notes, dateStr) {
+  const tableRows = rows.map(r => `
+    <tr>
+      <td style="padding:10px 16px; border-bottom:1px solid #e8e4df; font-family:monospace; font-size:16px; font-weight:600; text-align:center; width:80px;">${r.part}</td>
+      <td style="padding:10px 16px; border-bottom:1px solid #e8e4df; font-size:14px;">${r.desc}</td>
+      <td style="padding:10px 16px; border-bottom:1px solid #e8e4df; font-size:14px; text-align:center; font-family:monospace;">${r.qty}</td>
+    </tr>`).join('');
+
+  const notesSection = notes ? `
+    <p style="margin:24px 0 8px; font-size:13px; font-weight:600; color:#7a746c; text-transform:uppercase; letter-spacing:0.06em;">Notes</p>
+    <p style="font-size:14px; color:#3a3632; line-height:1.6; background:#f5f3ef; border-radius:8px; padding:12px 16px;">${notes}</p>` : '';
+
+  return `
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif; max-width:560px; margin:0 auto; color:#1a1816;">
+      <div style="background:#1a7a5e; border-radius:12px 12px 0 0; padding:20px 24px;">
+        <p style="margin:0; color:rgba(255,255,255,0.8); font-size:12px; text-transform:uppercase; letter-spacing:0.1em;">Parts Washing Report</p>
+        <p style="margin:4px 0 0; color:white; font-size:20px; font-weight:600;">${dateStr}</p>
+      </div>
+      <div style="border:1px solid #e2ddd6; border-top:none; border-radius:0 0 12px 12px; padding:24px;">
+        <table style="width:100%; border-collapse:collapse; border:1px solid #e8e4df; border-radius:8px; overflow:hidden;">
+          <thead>
+            <tr style="background:#f5f3ef;">
+              <th style="padding:10px 16px; text-align:center; font-size:12px; font-weight:600; color:#7a746c; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid #e8e4df; width:80px;">Part #</th>
+              <th style="padding:10px 16px; text-align:left; font-size:12px; font-weight:600; color:#7a746c; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid #e8e4df;">Description</th>
+              <th style="padding:10px 16px; text-align:center; font-size:12px; font-weight:600; color:#7a746c; text-transform:uppercase; letter-spacing:0.06em; border-bottom:1px solid #e8e4df; width:70px;">Qty</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+        ${notesSection}
+      </div>
+    </div>`;
+}
+
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type}`;
+  const icon = type === 'success'
+    ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+  t.innerHTML = icon + `<span>${msg}</span>`;
+  t.style.display = 'flex';
+  setTimeout(() => { t.style.display = 'none'; }, 6000);
+}
+
+function saveToHistory(rows, notes, dateStr, isoDate) {
+  const history = JSON.parse(localStorage.getItem('wash_history') || '[]');
+  history.unshift({ date: isoDate, dateStr, rows, notes });
+  localStorage.setItem('wash_history', JSON.stringify(history));
+}
+
+function renderHistory() {
+  const history = JSON.parse(localStorage.getItem('wash_history') || '[]');
+  const el = document.getElementById('history-content');
+  if (history.length === 0) {
+    el.innerHTML = '<p style="font-size:13px; color:var(--muted); padding:8px 0;">No past reports yet.</p>';
+    return;
+  }
+  let html = '';
+  history.slice(0, 15).forEach(entry => {
+    html += `<div style="margin-bottom:1.25rem;">
+      <p style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">${entry.dateStr}</p>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <thead><tr>
+          <th style="text-align:center;color:var(--muted);font-weight:600;padding-bottom:4px;width:60px;">Part #</th>
+          <th style="text-align:left;color:var(--muted);font-weight:600;padding-bottom:4px;">Description</th>
+          <th style="text-align:center;color:var(--muted);font-weight:600;padding-bottom:4px;width:50px;">Qty</th>
+        </tr></thead>
+        <tbody>
+          ${entry.rows.map(r => `<tr>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-size:13px;padding:3px 0;">${r.part}</td>
+            <td style="font-size:13px;padding:3px 0;">${r.desc}</td>
+            <td style="text-align:center;font-family:'DM Mono',monospace;font-size:13px;padding:3px 0;">${r.qty}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function toggleHistory() {
+  const body = document.getElementById('history-body');
+  const arrow = document.getElementById('history-arrow');
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  arrow.classList.toggle('open', !open);
+  if (!open) renderHistory();
+}
+
+async function submitReport() {
+  const rows = getRows().filter(r => r.part !== '-' || r.desc !== '-');
+
+  if (rows.length === 0) {
+    showToast('error', 'Please add at least one part before sending.');
+    return;
+  }
+
+  // Validate all part numbers are exactly 3 digits
+  const invalid = rows.some(r => r.part !== '-' && !/^\d{3}$/.test(r.part));
+  if (invalid) {
+    showToast('error', 'Part numbers must be exactly 3 digits.');
+    return;
+  }
+
+  const notes = document.getElementById('notes').value.trim();
+  const isoDate = todayISO();
+  const dateStr = today();
+  const subject = `Washed Today - ${isoDate}`;
+  const htmlBody = buildEmailHTML(rows, notes, dateStr);
+
+  const btn = document.getElementById('submit-btn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('btn-text');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Sending…';
+
+  try {
+
+    saveToHistory(rows, notes, dateStr, isoDate);
+    showToast('success', `Report sent to ${CONFIG.recipient_email}!`);
+
+    document.getElementById('parts-body').innerHTML = '';
+    rowCount = 0;
+    addRow();
+    document.getElementById('notes').value = '';
+
+  } catch (err) {
+    const errMsg = (err && (err.text || err.message)) || JSON.stringify(err) || 'Unknown error';
+    showToast('error', 'Send failed: ' + errMsg);
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = 'Send Report';
+  }
+}
+
+// Init
+addRow();
+</script>
+</body>
+</html>

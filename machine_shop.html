@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Machine Shop</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#f5f3ef;--surface:#fff;--border:#e2ddd6;--text:#1a1816;--muted:#7a746c;
+    --accent:#1a7a5e;--accent-light:#eaf5f0;--danger:#c94a1e;--danger-light:#fdf0ec;
+    --warn:#854f0b;--warn-light:#fef3e2;--success:#2d6e3e;--success-bg:#eaf3de;
+    --input-focus:#1a7a5e33;--row-stripe:#faf9f7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  nav{background:var(--surface);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 1.5rem;gap:4px;position:sticky;top:0;z-index:100;overflow-x:auto;}
+  .nav-brand{display:flex;align-items:center;gap:9px;margin-right:1.5rem;flex-shrink:0;}
+  .nav-dot{width:10px;height:10px;background:var(--accent);border-radius:50%;}
+  .nav-title{font-size:14px;font-weight:600;letter-spacing:-0.2px;white-space:nowrap;}
+  .nav-btn{background:none;border:none;cursor:pointer;padding:6px 12px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--muted);transition:background .15s,color .15s;white-space:nowrap;}
+  .nav-btn:hover{background:var(--bg);color:var(--text);}
+  .nav-btn.active{background:var(--accent-light);color:var(--accent);}
+  .page{display:none;padding:2rem 1rem;max-width:780px;margin:0 auto;}
+  .page.active{display:block;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.25rem;}
+  .card-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-group{display:flex;flex-direction:column;gap:5px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group.third{grid-column:span 1;}
+  label{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  input[type="text"],input[type="date"],input[type="number"],textarea,select{width:100%;border:1px solid var(--border);border-radius:7px;padding:9px 11px;font-family:'DM Sans',sans-serif;font-size:14px;background:transparent;color:var(--text);outline:none;transition:border-color .15s;}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--input-focus);}
+  input[type="number"]{font-family:'DM Mono',monospace;}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%237a746c'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;background-color:var(--surface);}
+
+  /* Work log rows */
+  .work-entry{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:10px;position:relative;} .work-entry input, .work-entry select{background:var(--surface) !important;}
+  .work-entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .work-entry-grid .full{grid-column:1/-1;}
+  .work-entry-bottom{display:grid;grid-template-columns:1fr 80px 80px;gap:10px;margin-top:10px;}
+  .work-entry-num{font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+  .remove-entry-btn{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;color:var(--muted);display:flex;align-items:center;transition:background .15s,color .15s;}
+  .remove-entry-btn:hover{background:var(--danger-light);color:var(--danger);}
+
+  .add-row-btn{margin-top:12px;display:flex;align-items:center;gap:7px;background:none;border:1.5px dashed var(--border);border-radius:8px;padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;width:100%;justify-content:center;transition:border-color .15s,color .15s,background .15s;}
+  .add-row-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+
+  .remove-btn{background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
+  .remove-btn:hover{background:var(--danger-light);color:var(--danger);}
+  .remove-btn svg{width:15px;height:15px;}
+
+  .submit-btn{width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:14px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s,transform .1s;margin-top:1.25rem;}
+  .submit-btn:hover{opacity:.9;}
+  .submit-btn:active{transform:scale(.99);}
+  .submit-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .submit-btn svg{width:18px;height:18px;fill:white;}
+  .submit-btn.danger{background:var(--danger);}
+
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .toast{display:none;align-items:center;gap:10px;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:500;margin-top:1rem;}
+  .toast.success{background:var(--success-bg);color:var(--success);border:1px solid #c0dd97;}
+  .toast.error{background:#fcebeb;color:#a32d2d;border:1px solid #f7c1c1;}
+  .toast svg{width:18px;height:18px;flex-shrink:0;}
+
+  /* CNC hour cards */
+  .cnc-grid{display:grid;grid-template-columns:repeat(3,minmax(140px,1fr));gap:12px;margin-bottom:1.25rem;overflow-x:auto;}
+  .cnc-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1rem;min-width:0;overflow:hidden;}
+  .cnc-card-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+  .cnc-status{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600;display:inline-block;margin-top:6px;}
+  .cnc-status.ok{background:#eaf3de;color:#2d6e3e;}
+  .cnc-status.warn{background:#fef3e2;color:var(--warn);}
+  .cnc-status.alert{background:#fcebeb;color:#a32d2d;}
+  .cnc-hours-input{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px;} .cnc-hours-input input{min-width:0;}
+  .cnc-hours-input input{text-align:center;padding:7px 6px;font-family:'DM Mono',monospace;}
+  .cnc-hours-label{font-size:10px;color:var(--muted);text-align:center;margin-top:3px;}
+
+  /* Filter */
+  .filter-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.25rem;}
+  .filter-group{display:flex;flex-direction:column;gap:4px;}
+  .filter-group label{font-size:11px;}
+  .filter-group input,.filter-group select{padding:7px 10px;font-size:13px;width:auto;min-width:120px;}
+  .clear-btn{background:none;border:1px solid var(--border);border-radius:7px;padding:7px 12px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:background .15s;align-self:flex-end;}
+  .clear-btn:hover{background:var(--bg);color:var(--text);}
+
+  .result-count{font-size:12px;color:var(--muted);margin-bottom:12px;font-family:'DM Mono',monospace;}
+  .data-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .data-table th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 10px 10px 0;text-align:left;white-space:nowrap;}
+  .data-table td{padding:8px 10px 8px 0;border-top:1px solid var(--border);vertical-align:top;font-size:13px;}
+  .data-table tr:nth-child(even) td{background:var(--row-stripe);}
+  .data-table td.mono{font-family:'DM Mono',monospace;}
+  .data-table td.muted{color:var(--muted);font-size:12px;}
+
+  /* Chart */
+  .chart-controls{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap;}
+  .chart-controls select{padding:7px 26px 7px 10px;font-size:13px;width:auto;background-color:var(--surface);border:1px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;color:var(--text);outline:none;cursor:pointer;}
+  .chart-controls label{font-size:13px;color:var(--muted);}
+  
+  .perf-bar{height:8px;background:var(--accent);border-radius:4px;min-width:4px;}
+  .perf-bar-wrap{background:var(--accent-light);border-radius:4px;overflow:hidden;width:100px;display:inline-block;vertical-align:middle;}
+  .no-data{text-align:center;color:var(--muted);font-size:14px;padding:4rem 0;}
+  .loading{text-align:center;color:var(--muted);font-size:13px;padding:2rem 0;font-family:'DM Mono',monospace;}
+
+  /* PM alert banner */
+  .pm-alert{background:#fcebeb;border:1px solid #f7c1c1;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#a32d2d;font-weight:500;}
+  .pm-warn{background:var(--warn-light);border:1px solid #f5d87a;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:var(--warn);font-weight:500;}
+
+  .section-divider{height:1px;background:var(--border);margin:1.5rem 0;}
+
+  @media(max-width:600px){
+    .form-grid{grid-template-columns:1fr;}
+    .form-group.full{grid-column:1;}
+    .cnc-grid{grid-template-columns:1fr;}
+    .work-row{grid-template-columns:1fr 100px 70px 60px 40px;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-dot"></div>
+    <span class="nav-title">Machine Shop</span>
+  </div>
+  <button class="nav-btn active" onclick="showPage('work',this)">Log Work</button>
+  <button class="nav-btn" onclick="showPage('maintenance',this)">Log Maintenance</button>
+  <button class="nav-btn" onclick="showPage('cnc',this)">CNC Hours</button>
+  <button class="nav-btn" onclick="showPage('chart',this)">Chart</button>
+  <button class="nav-btn" onclick="showPage('filter',this)">Filter</button>
+  <button class="nav-btn" onclick="showPage('defect',this)" style="color:#a32d2d;">Log Defect</button>
+</nav>
+
+<!-- ── LOG WORK ── -->
+<div class="page active" id="page-work">
+  <div class="card">
+    <div class="card-label">Work Log Entry</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Submitted By</label>
+        <input type="text" id="w-name" placeholder="Your name" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="w-date" />
+      </div>
+
+    </div>
+
+    <div class="section-divider"></div>
+    <div id="work-rows"></div>
+    <button class="add-row-btn" onclick="addWorkRow()">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add part / operation
+    </button>
+  </div>
+
+  <button class="submit-btn" id="w-submit-btn" onclick="submitWork()">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    <span id="w-btn-text">Submit Work Log</span>
+    <div class="spinner" id="w-spinner"></div>
+  </button>
+  <div class="toast" id="w-toast"></div>
+</div>
+
+<!-- ── LOG MAINTENANCE ── -->
+<div class="page" id="page-maintenance">
+  <div id="pm-alerts-maint"></div>
+  <div class="card">
+    <div class="card-label">Log Maintenance Event</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Performed By</label>
+        <input type="text" id="m-name" placeholder="Your name" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="m-date" />
+      </div>
+      <div class="form-group">
+        <label>CNC Machine</label>
+        <select id="m-cnc">
+          <option value="">Select machine…</option>
+          <option value="CNC #1">CNC #1</option>
+          <option value="CNC #2">CNC #2</option>
+          <option value="CNC #3">CNC #3</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>PM Type</label>
+        <select id="m-type">
+          <option value="">Select type…</option>
+          <option value="100hr - Trough Clean">100hr — Clean bottom troughs/chip pans</option>
+          <option value="500hr - Full Clean">500hr — Coolant, spindle, guideways</option>
+          <option value="1000hr - Service">1000hr — Full service + bearings + lubrication</option>
+          <option value="2000hr - Major Service">2000hr — DMG Mori major service</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group" id="m-other-wrap" style="display:none;">
+        <label>Describe Maintenance</label>
+        <input type="text" id="m-other" placeholder="Describe what was done…" />
+      </div>
+      <div class="form-group">
+        <label>Time Taken — Hours</label>
+        <input type="number" id="m-hrs" min="0" placeholder="0" />
+      </div>
+      <div class="form-group">
+        <label>Time Taken — Minutes</label>
+        <input type="number" id="m-mins" min="0" max="59" placeholder="0" />
+      </div>
+      <div class="form-group full">
+        <label>Notes (optional)</label>
+        <input type="text" id="m-notes" placeholder="Any additional notes…" />
+      </div>
+    </div>
+  </div>
+  <button class="submit-btn" id="m-submit-btn" onclick="submitMaintenance()">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    <span id="m-btn-text">Log Maintenance</span>
+    <div class="spinner" id="m-spinner"></div>
+  </button>
+  <div class="toast" id="m-toast"></div>
+</div>
+
+<!-- ── CNC HOURS ── -->
+<div class="page" id="page-cnc">
+  <div id="pm-alerts-cnc"></div>
+  <div class="card">
+    <div class="card-label">Daily CNC Odometer Readings</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:1.25rem;">Enter today's odometer reading for each machine (HH : MM : SS)</p>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:1.25rem;">
+      <div class="cnc-card" style="display:grid;grid-template-columns:100px 1fr auto;align-items:center;gap:16px;">
+        <div>
+          <div class="cnc-card-title" style="margin-bottom:4px;">CNC #1</div>
+          <div id="cnc1-pm-status"></div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;">Odometer (HH:MM:SS)</label>
+          <input type="text" id="cnc1-reading" placeholder="4251:45:42" style="font-family:'DM Mono',monospace;font-size:15px;letter-spacing:1px;width:100%;" />
+        </div>
+        <div id="cnc1-delta" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;"></div>
+      </div>
+      <div class="cnc-card" style="display:grid;grid-template-columns:100px 1fr auto;align-items:center;gap:16px;">
+        <div>
+          <div class="cnc-card-title" style="margin-bottom:4px;">CNC #2</div>
+          <div id="cnc2-pm-status"></div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;">Odometer (HH:MM:SS)</label>
+          <input type="text" id="cnc2-reading" placeholder="3769:09:51" style="font-family:'DM Mono',monospace;font-size:15px;letter-spacing:1px;width:100%;" />
+        </div>
+        <div id="cnc2-delta" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;"></div>
+      </div>
+      <div class="cnc-card" style="display:grid;grid-template-columns:100px 1fr auto;align-items:center;gap:16px;">
+        <div>
+          <div class="cnc-card-title" style="margin-bottom:4px;">CNC #3</div>
+          <div id="cnc3-pm-status"></div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px;">Odometer (HH:MM:SS)</label>
+          <input type="text" id="cnc3-reading" placeholder="3792:11:46" style="font-family:'DM Mono',monospace;font-size:15px;letter-spacing:1px;width:100%;" />
+        </div>
+        <div id="cnc3-delta" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;white-space:nowrap;"></div>
+      </div>
+    </div>
+  </div>
+  <button class="submit-btn" id="cnc-submit-btn" onclick="submitCNCHours()">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    <span id="cnc-btn-text">Submit & Send Report</span>
+    <div class="spinner" id="cnc-spinner"></div>
+  </button>
+  <div class="toast" id="cnc-toast"></div>
+</div>
+
+<!-- ── CHART ── -->
+<div class="page" id="page-chart">
+  <div class="card">
+    <div class="card-label">Average Time Per Unit — Longest to Shortest</div>
+    <div class="chart-controls">
+      <label>Month</label>
+      <select id="chart-month"></select>
+      <label>Year</label>
+      <select id="chart-year"></select>
+    </div>
+    <div class="loading" id="chart-loading" style="display:none;">Loading…</div>
+    <div class="no-data" id="chart-no-data" style="display:none;">No data for this period.</div>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="perf-table" style="display:none;">
+        <thead>
+          <tr>
+            <th>Part #</th>
+            <th>Part Type</th>
+            <th>Operation</th>
+            <th style="text-align:right;">Avg Min / Unit</th>
+            <th style="text-align:right;">Runs</th>
+            <th style="text-align:right;">Total Units</th>
+          </tr>
+        </thead>
+        <tbody id="perf-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── FILTER<!-- ── FILTER ── -->
+<div class="page" id="page-filter">
+  <div class="card">
+    <div class="card-label">Filter Work Log</div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>Name</label>
+        <input type="text" id="f-name" placeholder="Name…" oninput="applyFilter()" />
+      </div>
+      <div class="filter-group">
+        <label>Part #</label>
+        <input type="text" id="f-part" placeholder="Part #…" oninput="applyFilter()" />
+      </div>
+      <div class="filter-group">
+        <label>Operation</label>
+        <select id="f-op" onchange="applyFilter()">
+          <option value="">All</option>
+          <option>Deck</option><option>Bore</option><option>Hog</option><option>Hone</option><option>Other</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>From</label>
+        <input type="date" id="f-from" onchange="applyFilter()" />
+      </div>
+      <div class="filter-group">
+        <label>To</label>
+        <input type="date" id="f-to" onchange="applyFilter()" />
+      </div>
+      <button class="clear-btn" onclick="clearFilter()">Clear</button>
+    </div>
+    <div class="result-count" id="f-count"></div>
+    <div class="loading" id="f-loading" style="display:none;">Loading…</div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>By</th><th>Part #</th><th>Part Type</th><th>Operation</th><th>Qty</th><th>Actual Min</th></tr></thead>
+        <tbody id="f-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOG DEFECT ── -->
+<div class="page" id="page-defect">
+  <div class="card" style="border-color:#f7c1c1;">
+    <div class="card-label" style="color:#a32d2d;">Defect Report</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Reported By</label>
+        <input type="text" id="d-name" placeholder="Your name" />
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="d-date" />
+      </div>
+      <div class="form-group">
+        <label>Part Number</label>
+        <input type="text" id="d-part" placeholder="e.g. 203" />
+      </div>
+      <div class="form-group">
+        <label>Part Type</label>
+        <select id="d-parttype" onchange="toggleDefectCylSub()">
+          <option value="">Select type…</option>
+          <option>Case</option>
+          <option>Cylinder</option>
+          <option>Rotary Cover</option>
+          <option>Web</option>
+          <option>Head</option>
+          <option>Valve</option>
+          <option>Pump Cover</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group" id="d-parttype-other-wrap" style="display:none;">
+        <label>Describe Part Type</label>
+        <input type="text" id="d-parttype-other" placeholder="Describe…" />
+      </div>
+      <div class="form-group" id="d-cylsub-wrap" style="display:none;">
+        <label>Cylinder Type</label>
+        <select id="d-cylsub">
+          <option value="">Select…</option>
+          <option>Std</option>
+          <option>Reg</option>
+          <option>4-Stroke</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Operation</label>
+        <select id="d-op">
+          <option value="">Select…</option>
+          <option>Deck</option>
+          <option>Bore</option>
+          <option>Hog</option>
+          <option>Hone</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>Description of What Happened</label>
+        <textarea id="d-desc" placeholder="Describe what went wrong…" style="min-height:100px;"></textarea>
+      </div>
+    </div>
+  </div>
+  <button class="submit-btn danger" id="d-submit-btn" onclick="submitDefect()">
+    <svg viewBox="0 0 24 24" fill="white" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    <span id="d-btn-text">Submit Defect Report</span>
+    <div class="spinner" id="d-spinner"></div>
+  </button>
+  <div class="toast" id="d-toast"></div>
+
+  <div class="card" style="margin-top:2rem;">
+    <div class="card-label">Defect Count by Part — Most to Least</div>
+    <div class="chart-controls" style="margin-bottom:1rem;">
+      <label>Month</label>
+      <select id="d-chart-month"></select>
+      <label>Year</label>
+      <select id="d-chart-year"></select>
+    </div>
+    <div class="loading" id="d-chart-loading" style="display:none;">Loading…</div>
+    <div class="no-data" id="d-chart-no-data" style="display:none;">No defects for this period.</div>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="d-perf-table" style="display:none;">
+        <thead><tr>
+          <th>Part #</th><th>Part Type</th><th>Operation</th>
+          <th style="text-align:right;">Defects</th>
+        </tr></thead>
+        <tbody id="d-perf-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────
+const CONFIG = {
+  recipient_email: 'thomas@sbt.com',
+  webhook_url: 'https://script.google.com/macros/s/AKfycby43laZkSiiHfgu1xeZBp5zIBffYTA4xCA9kIlDY3iodGTLRCG0iHVEmDXORkxkP8yw/exec',
+};
+
+
+// PM thresholds in hours
+const PM_THRESHOLDS = [100, 500, 1000, 2000];
+const PM_LABELS = {
+  100: 'Clean bottom troughs/chip pans',
+  500: 'Coolant tank, chip conveyor, spindle taper, guideways',
+  1000: 'Full service + bearings + heat exchanger + lubrication',
+  2000: 'DMG Mori major service'
+};
+
+// Starting odometer hours (seconds)
+const CNC_START = {
+  'CNC #1': 4251*3600 + 45*60 + 42,
+  'CNC #2': 3769*3600 + 9*60 + 51,
+  'CNC #3': 3792*3600 + 11*60 + 46
+};
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let allWorkLogs = [];
+let dataLoaded = false;
+let workRowCount = 0;
+
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+
+// ── Navigation ─────────────────────────────────────────
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'chart')  loadAndRenderChart();
+  if (name === 'filter') loadAndRenderFilter();
+  if (name === 'maintenance' || name === 'cnc') renderPMAlerts();
+  if (name === 'defect') { fetchDefects(true).then(renderDefectChart); }
+}
+
+// ── Work rows ──────────────────────────────────────────
+function addWorkRow(data={}) {
+  workRowCount++;
+  const id = workRowCount;
+  const rowCount = document.querySelectorAll('#work-rows .work-entry').length + 1;
+  const div = document.createElement('div');
+  div.id = 'wr-' + id;
+  div.className = 'work-entry';
+  div.innerHTML = `
+    <div class="work-entry-num">Entry #${rowCount}</div>
+    <button class="remove-entry-btn" onclick="removeWorkRow(${id})" title="Remove">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h8v10H8V9zm7.5-5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+    </button>
+    <div class="work-entry-grid">
+      <div class="form-group">
+        <label>Part Number</label>
+        <input type="text" id="wr-part-${id}" placeholder="e.g. 203" value="${data.part||''}"  />
+      </div>
+      <div class="form-group">
+        <label>Part Type</label>
+        <select id="wr-parttype-${id}" onchange="togglePartTypeOther(${id})">
+          <option value="">Select type…</option>
+          <option ${data.partType==='Case'?'selected':''}>Case</option>
+          <option ${data.partType==='Cylinder'?'selected':''}>Cylinder</option>
+          <option ${data.partType==='Rotary Cover'?'selected':''}>Rotary Cover</option>
+          <option ${data.partType==='Web'?'selected':''}>Web</option>
+          <option ${data.partType==='Head'?'selected':''}>Head</option>
+          <option ${data.partType==='Valve'?'selected':''}>Valve</option>
+          <option ${data.partType==='Pump Cover'?'selected':''}>Pump Cover</option>
+          <option value="Other" ${data.partType==='Other'?'selected':''}>Other</option>
+        </select>
+        <div id="wr-parttype-other-${id}" style="display:none;margin-top:4px;">
+          <input type="text" id="wr-parttype-othertxt-${id}" placeholder="Describe part type…" />
+        </div>
+      </div>
+      <div class="form-group" id="wr-cylsub-wrap-${id}" style="display:${data.partType==='Cylinder'?'flex':'none'};flex-direction:column;gap:5px;">
+        <label>Cylinder Type</label>
+        <select id="wr-cylsub-${id}">
+          <option value="">Select…</option>
+          <option ${data.cylSub==='Std'?'selected':''}>Std</option>
+          <option ${data.cylSub==='Reg'?'selected':''}>Reg</option>
+          <option ${data.cylSub==='4-Stroke'?'selected':''}>4-Stroke</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Operation</label>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;">
+          <select id="wr-op-${id}" onchange="toggleOther(${id})">
+            <option value="">Select…</option>
+            <option ${data.op==='Deck'?'selected':''}>Deck</option>
+            <option ${data.op==='Bore'?'selected':''}>Bore</option>
+            <option ${data.op==='Hog'?'selected':''}>Hog</option>
+            <option ${data.op==='Hone'?'selected':''}>Hone</option>
+            <option ${data.op==='Other'?'selected':''}>Other</option>
+          </select>
+          <div>
+            <label style="display:block;margin-bottom:5px;">Qty</label>
+            <input type="number" min="1" placeholder="1" id="wr-qty-${id}" value="${data.qty||''}" style="text-align:center;width:70px;" />
+          </div>
+        </div>
+      </div>
+      <div class="form-group full" id="wr-other-wrap-${id}" style="display:${data.op==='Other'?'flex':'none'}">
+        <label>Describe Operation</label>
+        <input type="text" id="wr-othertxt-${id}" placeholder="What was done…" value="${data.other||''}" />
+      </div>
+    </div>
+    <div class="work-entry-bottom">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label>Actual Time</label>
+        <div style="display:flex;gap:6px;">
+          <input type="number" min="0" placeholder="hrs" id="wr-hrs-${id}" value="${data.actHrs||''}" style="text-align:center;" />
+          <input type="number" min="0" max="59" placeholder="min" id="wr-mins-${id}" value="${data.actMins||''}" style="text-align:center;" />
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('work-rows').appendChild(div);
+  
+}
+
+function removeWorkRow(id) {
+  const rows = document.querySelectorAll('#work-rows .work-entry');
+  if (rows.length <= 1) return;
+  document.getElementById('wr-' + id)?.remove();
+}
+
+function toggleOther(id) {
+  const val = document.getElementById('wr-op-' + id).value;
+  document.getElementById('wr-other-wrap-' + id).style.display = val === 'Other' ? 'flex' : 'none';
+}
+
+function togglePartTypeOther(id) {
+  const val = document.getElementById('wr-parttype-' + id).value;
+  document.getElementById('wr-parttype-other-' + id).style.display = val === 'Other' ? 'block' : 'none';
+  const cylWrap = document.getElementById('wr-cylsub-wrap-' + id);
+  if (cylWrap) cylWrap.style.display = val === 'Cylinder' ? 'flex' : 'none';
+}
+
+function getWorkRows() {
+  const rows = document.querySelectorAll('#work-rows .work-entry');
+  const data = [];
+  rows.forEach(r => {
+    const id       = r.id.replace('wr-','');
+    const part     = document.getElementById('wr-part-' + id)?.value.trim() || '';
+    const partTypeRaw = document.getElementById('wr-parttype-' + id)?.value || '';
+    const partTypeOther = document.getElementById('wr-parttype-othertxt-' + id)?.value.trim() || '';
+    const partType = partTypeRaw === 'Other' ? (partTypeOther || 'Other') : partTypeRaw;
+    const cylSub = partTypeRaw === 'Cylinder' ? (document.getElementById('wr-cylsub-' + id)?.value || '') : '';
+    const op       = document.getElementById('wr-op-' + id).value;
+    const other    = document.getElementById('wr-othertxt-' + id)?.value.trim() || '';
+    const hrs      = parseInt(document.getElementById('wr-hrs-' + id).value) || 0;
+    const mins     = parseInt(document.getElementById('wr-mins-' + id).value) || 0;
+    const qty      = parseInt(document.getElementById('wr-qty-' + id).value) || 1;
+    const actMin   = hrs*60 + mins;
+    if (op || part) data.push({ part, partType, cylSub, op: op === 'Other' ? other || 'Other' : op, actMin, qty });
+  });
+  return data;
+}
+
+// ── PM Logic ───────────────────────────────────────────
+function getCNCHoursFromStorage() {
+  return JSON.parse(localStorage.getItem('cnc_hours') || JSON.stringify({
+    'CNC #1': { lastReading: CNC_START['CNC #1'], lastPM: { 100: CNC_START['CNC #1'], 500: CNC_START['CNC #1'], 1000: CNC_START['CNC #1'], 2000: CNC_START['CNC #1'] } },
+    'CNC #2': { lastReading: CNC_START['CNC #2'], lastPM: { 100: CNC_START['CNC #2'], 500: CNC_START['CNC #2'], 1000: CNC_START['CNC #2'], 2000: CNC_START['CNC #2'] } },
+    'CNC #3': { lastReading: CNC_START['CNC #3'], lastPM: { 100: CNC_START['CNC #3'], 500: CNC_START['CNC #3'], 1000: CNC_START['CNC #3'], 2000: CNC_START['CNC #3'] } },
+  }));
+}
+
+function getPMAlerts() {
+  const data = getCNCHoursFromStorage();
+  const alerts = [];
+  ['CNC #1','CNC #2','CNC #3'].forEach(cnc => {
+    const d = data[cnc];
+    if (!d) return;
+    const currentSec = d.lastReading;
+    PM_THRESHOLDS.forEach(thresh => {
+      const lastPMSec = d.lastPM[thresh] || 0;
+      const hoursSince = (currentSec - lastPMSec) / 3600;
+      if (hoursSince >= thresh) {
+        alerts.push({ cnc, thresh, hoursSince: Math.floor(hoursSince), label: PM_LABELS[thresh] });
+      }
+    });
+  });
+  return alerts;
+}
+
+function renderPMAlerts() {
+  const alerts = getPMAlerts();
+  ['pm-alerts-maint','pm-alerts-cnc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (alerts.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = alerts.map(a =>
+      `<div class="pm-alert">⚠️ <strong>${a.cnc}</strong> — ${a.thresh}hr PM overdue (${a.hoursSince}h since last): ${a.label}</div>`
+    ).join('');
+  });
+}
+
+// ── CNC Hours ──────────────────────────────────────────
+function toSeconds(h, m, s) { return (parseInt(h)||0)*3600 + (parseInt(m)||0)*60 + (parseInt(s)||0); }
+function formatHMS(sec) {
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = sec%60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function parseReading(val) {
+  if (!val) return null;
+  const parts = val.split(':');
+  if (parts.length < 2) return null;
+  return toSeconds(parts[0]||0, parts[1]||0, parts[2]||0);
+}
+
+function updateCNCDeltas() {
+  const data = getCNCHoursFromStorage();
+  [1,2,3].forEach(n => {
+    const cnc = 'CNC #' + n;
+    const val = document.getElementById('cnc'+n+'-reading').value.trim();
+    if (!val) return;
+    const newSec = parseReading(val);
+    if (!newSec) return;
+    const lastSec = data[cnc]?.lastReading || CNC_START[cnc];
+    const deltaSec = Math.max(0, newSec - lastSec);
+    const pct = ((deltaSec / 3600) / 8 * 100).toFixed(1);
+    document.getElementById('cnc'+n+'-delta').textContent = '+' + formatHMS(deltaSec) + ' today (' + pct + '% utilization)';
+  });
+}
+
+[1,2,3].forEach(n => {
+  document.getElementById('cnc'+n+'-reading').addEventListener('input', updateCNCDeltas);
+});
+
+async function submitCNCHours() {
+  const data = getCNCHoursFromStorage();
+  const readings = {};
+  const deltas = {};
+  let valid = true;
+
+  [1,2,3].forEach(n => {
+    const cnc = 'CNC #' + n;
+    const val = document.getElementById('cnc'+n+'-reading').value.trim();
+    if (!val) { valid = false; return; }
+    const newSec = parseReading(val);
+    if (!newSec) { valid = false; return; }
+    const lastSec = data[cnc]?.lastReading || CNC_START[cnc];
+    const deltaSec = Math.max(0, newSec - lastSec);
+    readings[cnc] = newSec;
+    deltas[cnc] = deltaSec;
+  });
+
+  if (!valid) { showToast('cnc-toast','error','Please enter readings for all 3 machines.'); return; }
+
+  // Check PM alerts
+  const pmAlerts = getPMAlerts();
+
+  // Build email
+  const dateStr = todayISO();
+  let emailRows = '';
+  [1,2,3].forEach(n => {
+    const cnc = 'CNC #' + n;
+    const deltaSec = deltas[cnc];
+    const pct = ((deltaSec/3600)/8*100).toFixed(1);
+    emailRows += `<tr>
+      <td style="padding:10px 14px;border-bottom:1px solid #e8e4df;font-weight:600;">${cnc}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e8e4df;font-family:monospace;">${formatHMS(readings[cnc])}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e8e4df;font-family:monospace;">+${formatHMS(deltaSec)}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e8e4df;font-weight:600;color:${parseFloat(pct)>=50?'#2d6e3e':'#854f0b'};">${pct}%</td>
+    </tr>`;
+  });
+
+  let pmSection = '';
+  if (pmAlerts.length > 0) {
+    pmSection = `<div style="background:#fcebeb;border-radius:8px;padding:14px 16px;margin-top:20px;">
+      <p style="font-size:13px;font-weight:700;color:#a32d2d;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">⚠️ PM Service Required</p>
+      ${pmAlerts.map(a => `<p style="font-size:13px;color:#a32d2d;margin:4px 0;"><strong>${a.cnc}</strong> — ${a.thresh}hr: ${a.label}</p>`).join('')}
+    </div>`;
+  }
+
+  // Total utilization
+  const totalDeltaSec = Object.values(deltas).reduce((s,v) => s+v, 0);
+  const totalUtilPct = ((totalDeltaSec / 3600) / 24 * 100).toFixed(1);
+
+  const htmlBody = `<div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:580px;margin:0 auto;color:#1a1816;">
+    <div style="background:#1a7a5e;border-radius:12px 12px 0 0;padding:20px 24px;">
+      <p style="margin:0;color:rgba(255,255,255,0.8);font-size:12px;text-transform:uppercase;letter-spacing:.1em;">CNC Hours Report</p>
+      <p style="margin:4px 0 0;color:white;font-size:20px;font-weight:600;">${dateStr}</p>
+    </div>
+    <div style="border:1px solid #e2ddd6;border-top:none;border-radius:0 0 12px 12px;padding:24px;">
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e8e4df;border-radius:8px;overflow:hidden;">
+        <thead><tr style="background:#f5f3ef;">
+          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Machine</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Odometer</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Today</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Utilization</th>
+        </tr></thead>
+        <tbody>${emailRows}</tbody>
+      </table>
+      <div style="margin-top:16px;padding:12px 16px;background:#f5f3ef;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;font-weight:600;color:#7a746c;text-transform:uppercase;letter-spacing:.06em;">Total Utilization (all machines)</span>
+        <span style="font-size:18px;font-weight:700;color:#1a7a5e;">${totalUtilPct}%</span>
+      </div>
+      ${pmSection}
+    </div>
+  </div>`;
+
+  const btn = document.getElementById('cnc-submit-btn');
+  const spinner = document.getElementById('cnc-spinner');
+  const btnText = document.getElementById('cnc-btn-text');
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Sending…';
+
+  try {
+    
+    // Save readings to localStorage
+    [1,2,3].forEach(n => {
+      const cnc = 'CNC #' + n;
+      data[cnc].lastReading = readings[cnc];
+    });
+    localStorage.setItem('cnc_hours', JSON.stringify(data));
+
+    // Post to sheet
+    try {
+      await fetch(CONFIG.webhook_url, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ source:'cnc_hours', date: dateStr, readings, deltas })
+      });
+    } catch(e) { console.warn('Sheet post failed:', e); }
+
+    renderPMAlerts();
+    showToast('cnc-toast','success','Hours saved to Google Sheets!');
+  } catch(err) {
+    showToast('cnc-toast','error','Send failed: ' + ((err&&err.text)||JSON.stringify(err)));
+  } finally {
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Submit & Send Report';
+  }
+}
+
+// ── Submit Work ────────────────────────────────────────
+async function submitWork() {
+  const name     = document.getElementById('w-name').value.trim();
+  const date     = document.getElementById('w-date').value;
+  const rows     = getWorkRows();
+
+  if (!name) {
+    showToast('w-toast','error','Please enter your name.');
+    return;
+  }
+  if (rows.length === 0) {
+    showToast('w-toast','error','Please add at least one entry.');
+    return;
+  }
+  // Validate each row
+  for (const r of rows) {
+    if (!r.part) { showToast('w-toast','error','Part number is required for all entries.'); return; }
+    if (!r.partType) { showToast('w-toast','error','Part type is required for all entries.'); return; }
+    if (!r.op) { showToast('w-toast','error','Operation is required for all entries.'); return; }
+    if (!r.actMin || r.actMin <= 0) { showToast('w-toast','error','Actual time is required for all entries.'); return; }
+    if (!r.qty || r.qty <= 0) { showToast('w-toast','error','Quantity is required for all entries.'); return; }
+  }
+
+  const btn = document.getElementById('w-submit-btn');
+  const spinner = document.getElementById('w-spinner');
+  const btnText = document.getElementById('w-btn-text');
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Submitting…';
+
+
+  const emailRows = rows.map(r => `<tr>
+    <td style="padding:9px 14px;border-bottom:1px solid #e8e4df;font-family:monospace;font-weight:600;">${r.part||'—'}</td>
+    <td style="padding:9px 14px;border-bottom:1px solid #e8e4df;">${r.partType||'—'}</td>
+    <td style="padding:9px 14px;border-bottom:1px solid #e8e4df;">${r.op}</td>
+    <td style="padding:9px 14px;border-bottom:1px solid #e8e4df;text-align:center;">${r.qty}</td>
+    <td style="padding:9px 14px;border-bottom:1px solid #e8e4df;text-align:center;font-family:monospace;">${r.actMin ? r.actMin+' min' : '—'}</td>
+  </tr>`).join('');
+
+  const htmlBody = `<div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:580px;margin:0 auto;color:#1a1816;">
+    <div style="background:#1a5c9e;border-radius:12px 12px 0 0;padding:20px 24px;">
+      <p style="margin:0;color:rgba(255,255,255,0.8);font-size:12px;text-transform:uppercase;letter-spacing:.1em;">Machine Shop Work Log</p>
+      <p style="margin:4px 0 0;color:white;font-size:20px;font-weight:600;">${date}</p>
+      <p style="margin:4px 0 0;color:rgba(255,255,255,0.75);font-size:14px;">Submitted by ${name}</p>
+    </div>
+    <div style="border:1px solid #e2ddd6;border-top:none;border-radius:0 0 12px 12px;padding:24px;">
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e8e4df;border-radius:8px;overflow:hidden;">
+        <thead><tr style="background:#f5f3ef;">
+          <th style="padding:9px 14px;text-align:left;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Part #</th>
+          <th style="padding:9px 14px;text-align:left;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Part Type</th>
+          <th style="padding:9px 14px;text-align:left;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Operation</th>
+          <th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Qty</th>
+          <th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:600;color:#7a746c;text-transform:uppercase;border-bottom:1px solid #e8e4df;">Actual Time</th>
+        </tr></thead>
+        <tbody>${emailRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  try {
+    
+    // Post to sheet
+    const payload = { source:'machine_shop', date, name, rows };
+    try {
+      await fetch(CONFIG.webhook_url, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+    } catch(e) { console.warn('Sheet post failed:', e); }
+
+    dataLoaded = false;
+    showToast('w-toast','success','Work log saved to Google Sheets!');
+    document.getElementById('w-name').value = '';
+    document.getElementById('work-rows').innerHTML = '';
+    workRowCount = 0;
+    addWorkRow();
+    document.getElementById('w-date').value = todayISO();
+
+  } catch(err) {
+    showToast('w-toast','error','Send failed: ' + ((err&&err.text)||JSON.stringify(err)));
+  } finally {
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Submit Work Log';
+  }
+}
+
+// ── Submit Maintenance ─────────────────────────────────
+async function submitMaintenance() {
+  const name  = document.getElementById('m-name').value.trim();
+  const date  = document.getElementById('m-date').value;
+  const cnc   = document.getElementById('m-cnc').value;
+  const type  = document.getElementById('m-type').value;
+  const other = document.getElementById('m-other').value.trim();
+  const hrs   = parseInt(document.getElementById('m-hrs').value) || 0;
+  const mins  = parseInt(document.getElementById('m-mins').value) || 0;
+  const notes = document.getElementById('m-notes').value.trim();
+
+  if (!name || !cnc || !type) {
+    showToast('m-toast','error','Please fill in name, machine, and PM type.');
+    return;
+  }
+
+  const typeLabel = type === 'Other' ? (other || 'Other') : type;
+  const totalMin = hrs*60 + mins;
+
+  const btn = document.getElementById('m-submit-btn');
+  const spinner = document.getElementById('m-spinner');
+  const btnText = document.getElementById('m-btn-text');
+  btn.disabled = true; spinner.style.display = 'block'; btnText.textContent = 'Logging…';
+
+  // Total utilization
+  const totalDeltaSec = Object.values(deltas).reduce((s,v) => s+v, 0);
+  const totalUtilPct = ((totalDeltaSec / 3600) / 24 * 100).toFixed(1);
+
+  const htmlBody = `<div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:500px;margin:0 auto;color:#1a1816;">
+    <div style="background:#854f0b;border-radius:12px 12px 0 0;padding:20px 24px;">
+      <p style="margin:0;color:rgba(255,255,255,0.8);font-size:12px;text-transform:uppercase;letter-spacing:.1em;">CNC Maintenance Log</p>
+      <p style="margin:4px 0 0;color:white;font-size:20px;font-weight:600;">${cnc} — ${date}</p>
+      <p style="margin:4px 0 0;color:rgba(255,255,255,0.75);font-size:14px;">By ${name}</p>
+    </div>
+    <div style="border:1px solid #e2ddd6;border-top:none;border-radius:0 0 12px 12px;padding:24px;">
+      <p style="font-size:14px;"><strong>Type:</strong> ${typeLabel}</p>
+      <p style="font-size:14px;margin-top:8px;"><strong>Time taken:</strong> ${hrs}h ${mins}m</p>
+      ${notes ? `<p style="font-size:14px;margin-top:8px;"><strong>Notes:</strong> ${notes}</p>` : ''}
+    </div>
+  </div>`;
+
+  try {
+    // Reset PM countdown for this machine/threshold
+    const threshMatch = PM_THRESHOLDS.find(t => typeLabel.startsWith(t+'hr'));
+    if (threshMatch) {
+      const data = getCNCHoursFromStorage();
+      if (data[cnc]) {
+        data[cnc].lastPM[threshMatch] = data[cnc].lastReading;
+        localStorage.setItem('cnc_hours', JSON.stringify(data));
+      }
+    }
+
+    // Post to sheet
+    try {
+      await fetch(CONFIG.webhook_url, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ source:'maintenance', date, name, cnc, type: typeLabel, totalMin, notes })
+      });
+    } catch(e) { console.warn('Sheet post failed:', e); }
+
+    renderPMAlerts();
+    showToast('m-toast','success','Maintenance logged!');
+    document.getElementById('m-name').value = '';
+    document.getElementById('m-cnc').value = '';
+    document.getElementById('m-type').value = '';
+    document.getElementById('m-other').value = '';
+    document.getElementById('m-hrs').value = '';
+    document.getElementById('m-mins').value = '';
+    document.getElementById('m-notes').value = '';
+
+  } catch(err) {
+    showToast('m-toast','error','Send failed: ' + ((err&&err.text)||JSON.stringify(err)));
+  } finally {
+    btn.disabled = false; spinner.style.display = 'none'; btnText.textContent = 'Log Maintenance';
+  }
+}
+
+// ── Data fetching ──────────────────────────────────────
+async function fetchWorkLogs(force) {
+  if (dataLoaded && !force) return allWorkLogs;
+  try {
+    const res  = await fetch(CONFIG.webhook_url + '?action=getMachineShop');
+    const data = await res.json();
+    allWorkLogs = data.logs || [];
+    dataLoaded = true;
+  } catch(e) { console.warn('Fetch failed:', e); }
+  return allWorkLogs;
+}
+
+// ── Chart ──────────────────────────────────────────────
+async function loadAndRenderChart() {
+  document.getElementById('chart-loading').style.display = 'block';
+  document.getElementById('perf-table').style.display = 'none';
+  document.getElementById('chart-no-data').style.display = 'none';
+  await fetchWorkLogs(true);
+  document.getElementById('chart-loading').style.display = 'none';
+  renderChart();
+}
+
+function renderChart() {
+  const month = parseInt(document.getElementById('chart-month').value);
+  const year  = parseInt(document.getElementById('chart-year').value);
+
+  const filtered = allWorkLogs.filter(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    return d.getMonth() === month && d.getFullYear() === year;
+  });
+
+  const table  = document.getElementById('perf-table');
+  const noData = document.getElementById('chart-no-data');
+
+  if (!filtered.length) {
+    table.style.display = 'none';
+    noData.style.display = 'block';
+    return;
+  }
+
+  // Group by Part # + Part Type + Operation
+  const groups = {};
+  filtered.forEach(e => {
+    if (!e.actMin || e.actMin <= 0) return;
+    const key = [e.part||'—', e.partType||'—', e.op||'—'].join('||');
+    if (!groups[key]) groups[key] = { part: e.part||'—', partType: e.partType||'—', op: e.op||'—', totalMinPerUnit: 0, runs: 0, totalUnits: 0 };
+    const qty = parseInt(e.qty) || 1;
+    groups[key].totalMinPerUnit += e.actMin / qty;
+    groups[key].runs++;
+    groups[key].totalUnits += qty;
+  });
+
+  const sorted = Object.values(groups).sort((a,b) => (b.totalMinPerUnit/b.runs) - (a.totalMinPerUnit/a.runs));
+
+  if (!sorted.length) {
+    table.style.display = 'none';
+    noData.style.display = 'block';
+    return;
+  }
+
+  const maxAvg = sorted[0].totalMinPerUnit / sorted[0].runs;
+
+  table.style.display = 'table';
+  noData.style.display = 'none';
+
+  document.getElementById('perf-body').innerHTML = sorted.map(g => {
+    const avg = Math.round(g.totalMinPerUnit / g.runs * 10) / 10;
+    const barPct = Math.round((avg / maxAvg) * 100);
+    return `<tr>
+      <td class="mono">${g.part}</td>
+      <td>${g.partType}</td>
+      <td>${g.op}</td>
+      <td style="text-align:right;">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">
+          <div class="perf-bar-wrap"><div class="perf-bar" style="width:${barPct}%;"></div></div>
+          <span class="mono" style="min-width:50px;text-align:right;">${avg} min</span>
+        </div>
+      </td>
+      <td class="mono" style="text-align:right;">${g.runs}</td>
+      <td class="mono" style="text-align:right;">${g.totalUnits}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Filter// ── Filter ─────────────────────────────────────────────
+async function loadAndRenderFilter() {
+  document.getElementById('f-loading').style.display = 'block';
+  document.getElementById('f-body').innerHTML = '';
+  document.getElementById('f-count').textContent = '';
+  await fetchWorkLogs(true);
+  document.getElementById('f-loading').style.display = 'none';
+  applyFilter();
+}
+
+function applyFilter() {
+  const name = document.getElementById('f-name').value.trim().toLowerCase();
+  const part = document.getElementById('f-part').value.trim().toLowerCase();
+  const op   = document.getElementById('f-op').value;
+  const from = document.getElementById('f-from').value;
+  const to   = document.getElementById('f-to').value;
+
+  const result = allWorkLogs.filter(e => {
+    if (name && !String(e.name||'').toLowerCase().includes(name)) return false;
+    if (part && !String(e.part||'').toLowerCase().includes(part)) return false;
+    if (op   && e.op !== op) return false;
+    if (from && e.date < from) return false;
+    if (to   && e.date > to)   return false;
+    return true;
+  });
+
+  document.getElementById('f-count').textContent = `${result.length} result${result.length!==1?'s':''}`;
+  document.getElementById('f-body').innerHTML = result.length === 0
+    ? '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:2rem 0;">No entries found.</td></tr>'
+    : result.map(e => `<tr>
+        <td class="mono">${e.date}</td>
+        <td>${e.name||''}</td>
+        <td class="mono">${e.part||''}</td>
+        <td class="muted">${e.partType||''}</td>
+        <td>${e.op||''}</td>
+        <td class="mono">${e.qty||''}</td>
+        <td class="mono">${e.actMin ? e.actMin+' min' : '—'}</td>
+      </tr>`).join('');
+}
+
+function clearFilter() {
+  ['f-name','f-part','f-from','f-to'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-op').value = '';
+  applyFilter();
+}
+
+// ── Toast ──────────────────────────────────────────────
+function showToast(id, type, msg) {
+  const t = document.getElementById(id);
+  t.className = 'toast ' + type;
+  const icon = type === 'success'
+    ? `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>`;
+  t.innerHTML = icon + '<span>' + msg + '</span>';
+  t.style.display = 'flex';
+  setTimeout(() => { t.style.display = 'none'; }, 6000);
+}
+
+// ── Defect functions ───────────────────────────────────
+function toggleDefectCylSub() {
+  const val = document.getElementById('d-parttype').value;
+  document.getElementById('d-parttype-other-wrap').style.display = val === 'Other' ? 'flex' : 'none';
+  document.getElementById('d-cylsub-wrap').style.display = val === 'Cylinder' ? 'flex' : 'none';
+}
+
+let allDefects = [];
+let defectsLoaded = false;
+
+async function fetchDefects(force) {
+  if (defectsLoaded && !force) return allDefects;
+  try {
+    const res = await fetch(CONFIG.webhook_url + '?action=getDefects');
+    const data = await res.json();
+    allDefects = data.defects || [];
+    defectsLoaded = true;
+  } catch(e) { console.warn('Defect fetch failed:', e); }
+  return allDefects;
+}
+
+function renderDefectChart() {
+  const month = parseInt(document.getElementById('d-chart-month').value);
+  const year  = parseInt(document.getElementById('d-chart-year').value);
+
+  const filtered = allDefects.filter(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    return d.getMonth() === month && d.getFullYear() === year;
+  });
+
+  const table  = document.getElementById('d-perf-table');
+  const noData = document.getElementById('d-chart-no-data');
+
+  if (!filtered.length) { table.style.display='none'; noData.style.display='block'; return; }
+
+  const groups = {};
+  filtered.forEach(e => {
+    const key = [e.part||'—', e.partType||'—', e.op||'—'].join('||');
+    if (!groups[key]) groups[key] = { part:e.part||'—', partType:e.partType||'—', op:e.op||'—', count:0 };
+    groups[key].count++;
+  });
+
+  const sorted = Object.values(groups).sort((a,b) => b.count - a.count);
+  const max = sorted[0]?.count || 1;
+
+  table.style.display = 'table';
+  noData.style.display = 'none';
+
+  document.getElementById('d-perf-body').innerHTML = sorted.map(g => {
+    const barPct = Math.round((g.count / max) * 100);
+    return `<tr>
+      <td class="mono">${g.part}</td>
+      <td>${g.partType}</td>
+      <td>${g.op}</td>
+      <td style="text-align:right;">
+        <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;">
+          <div class="perf-bar-wrap" style="background:#fcebeb;"><div class="perf-bar" style="width:${barPct}%;background:#c94a1e;"></div></div>
+          <span class="mono" style="min-width:30px;text-align:right;">${g.count}</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function submitDefect() {
+  const name     = document.getElementById('d-name').value.trim();
+  const date     = document.getElementById('d-date').value;
+  const part     = document.getElementById('d-part').value.trim();
+  const ptRaw    = document.getElementById('d-parttype').value;
+  const ptOther  = document.getElementById('d-parttype-other').value.trim();
+  const partType = ptRaw === 'Other' ? (ptOther||'Other') : ptRaw;
+  const cylSub   = ptRaw === 'Cylinder' ? document.getElementById('d-cylsub').value : '';
+  const op       = document.getElementById('d-op').value;
+  const desc     = document.getElementById('d-desc').value.trim();
+
+  if (!name||!part||!partType||!op||!desc) {
+    showToast('d-toast','error','All fields are required.'); return;
+  }
+
+  const btn = document.getElementById('d-submit-btn');
+  const spinner = document.getElementById('d-spinner');
+  const btnText = document.getElementById('d-btn-text');
+  btn.disabled=true; spinner.style.display='block'; btnText.textContent='Submitting…';
+
+  // Total utilization
+  const totalDeltaSec = Object.values(deltas).reduce((s,v) => s+v, 0);
+  const totalUtilPct = ((totalDeltaSec / 3600) / 24 * 100).toFixed(1);
+
+  const htmlBody = `<div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:560px;margin:0 auto;color:#1a1816;">
+    <div style="background:#c94a1e;border-radius:12px 12px 0 0;padding:20px 24px;">
+      <p style="margin:0;color:rgba(255,255,255,0.8);font-size:12px;text-transform:uppercase;letter-spacing:.1em;">Machine Shop Defect Report</p>
+      <p style="margin:4px 0 0;color:white;font-size:20px;font-weight:600;">${part} — ${date}</p>
+      <p style="margin:4px 0 0;color:rgba(255,255,255,0.75);font-size:14px;">Reported by ${name}</p>
+    </div>
+    <div style="border:1px solid #e2ddd6;border-top:none;border-radius:0 0 12px 12px;padding:24px;">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+        <tr><td style="padding:7px 0;font-size:12px;font-weight:600;color:#7a746c;text-transform:uppercase;width:130px;">Part Type</td>
+            <td style="padding:7px 0;font-size:15px;">${partType}${cylSub?' — '+cylSub:''}</td></tr>
+        <tr><td style="padding:7px 0;font-size:12px;font-weight:600;color:#7a746c;text-transform:uppercase;border-top:1px solid #e8e4df;">Operation</td>
+            <td style="padding:7px 0;font-size:15px;border-top:1px solid #e8e4df;">${op}</td></tr>
+      </table>
+      <p style="font-size:12px;font-weight:600;color:#7a746c;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">What Happened</p>
+      <p style="font-size:14px;color:#3a3632;line-height:1.7;background:#fcebeb;border-radius:8px;padding:14px 16px;">${desc}</p>
+    </div>
+  </div>`;
+
+  try {
+    
+    try {
+      await fetch(CONFIG.webhook_url, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ source:'defect', date, name, part, partType, cylSub, op, desc })
+      });
+    } catch(e) { console.warn('Sheet post failed:', e); }
+
+    defectsLoaded = false;
+    showToast('d-toast','success','Defect logged to Google Sheets!');
+    ['d-name','d-part','d-parttype-other','d-desc'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('d-parttype').value='';
+    document.getElementById('d-op').value='';
+    document.getElementById('d-cylsub').value='';
+    document.getElementById('d-date').value = todayISO();
+
+  } catch(err) {
+    showToast('d-toast','error','Send failed: '+((err&&err.text)||JSON.stringify(err)));
+  } finally {
+    btn.disabled=false; spinner.style.display='none'; btnText.textContent='Submit Defect Report';
+  }
+}
+
+// ── Init ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('w-date').value = todayISO();
+  document.getElementById('m-date').value = todayISO();
+
+  const now = new Date();
+  const monthSel = document.getElementById('chart-month');
+  const yearSel  = document.getElementById('chart-year');
+  MONTHS.forEach((m,i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = m;
+    if (i === now.getMonth()) o.selected = true;
+    monthSel.appendChild(o);
+  });
+  for (let y = now.getFullYear(); y >= 2024; y--) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === now.getFullYear()) o.selected = true;
+    yearSel.appendChild(o);
+  }
+  monthSel.addEventListener('change', renderChart);
+  yearSel.addEventListener('change', renderChart);
+
+  document.getElementById('m-type').addEventListener('change', function() {
+    document.getElementById('m-other-wrap').style.display = this.value === 'Other' ? 'block' : 'none';
+  });
+
+  addWorkRow();
+  renderPMAlerts();
+
+  // Defect date + selectors
+  document.getElementById('d-date').value = todayISO();
+  const dMonthSel = document.getElementById('d-chart-month');
+  const dYearSel  = document.getElementById('d-chart-year');
+  MONTHS.forEach((m,i) => {
+    const o = document.createElement('option');
+    o.value=i; o.textContent=m;
+    if(i===now.getMonth()) o.selected=true;
+    dMonthSel.appendChild(o);
+  });
+  for(let y=now.getFullYear(); y>=2024; y--) {
+    const o = document.createElement('option');
+    o.value=y; o.textContent=y;
+    if(y===now.getFullYear()) o.selected=true;
+    dYearSel.appendChild(o);
+  }
+  dMonthSel.addEventListener('change', renderDefectChart);
+  dYearSel.addEventListener('change', renderDefectChart);
+});
+</script>
+</body>
+</html>
